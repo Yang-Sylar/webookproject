@@ -6,26 +6,35 @@ import "github.com/gin-gonic/gin"
 type UserHandler struct {
 }
 
+func (u *UserHandler) RegisterRoutesv1(ug *gin.RouterGroup) {
+	ug.POST("/signup", u.Signup)  // 注册
+	ug.POST("/login", u.Login)    // 登录
+	ug.POST("/edit", u.Edit)      // 编辑
+	ug.GET("/profile", u.Profile) // 个人信息
+}
+
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
-	// 注册
-	server.POST("/users/signup", u.Signup)
-	// 登录
-	server.POST("/users/login", u.Signup)
-	// 编辑
-	server.POST("/users/edit", u.Edit)
-	// 个人信息
-	server.GET("/users/profile", u.Profile)
+	// 分组路由
+	ug := server.Group("/users")
+
+	ug.POST("/signup", u.Signup)  // 注册
+	ug.POST("/login", u.Login)    // 登录
+	ug.POST("/edit", u.Edit)      // 编辑
+	ug.GET("/profile", u.Profile) // 个人信息
 }
 
 func (u *UserHandler) Signup(ctx *gin.Context) {
 
 }
+
 func (u *UserHandler) Login(ctx *gin.Context) {
 
 }
+
 func (u *UserHandler) Edit(ctx *gin.Context) {
 
 }
+
 func (u *UserHandler) Profile(ctx *gin.Context) {
 
 }
