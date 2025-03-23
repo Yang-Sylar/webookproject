@@ -4,15 +4,19 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"webook/internal/domain"
+	"webook/internal/service"
 )
 
 // UserHandler 用于在上面定义所有跟user有关的路由
 type UserHandler struct {
+	svc         *service.UserService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
 }
 
-func NewUserHandler() *UserHandler {
+func NewUserHandler(svc *service.UserService) *UserHandler {
+	// 正则表达式
 	const (
 		emailRegexPattern    = `^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$`
 		passwordRegexPattern = `^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$`
@@ -22,17 +26,11 @@ func NewUserHandler() *UserHandler {
 	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
 	// 返回指针
 	return &UserHandler{
+		svc:         svc,
 		emailExp:    emailExp,
 		passwordExp: passwordExp,
 	}
 }
-
-//func (u *UserHandler) RegisterRoutesv1(ug *gin.RouterGroup) {
-//	ug.POST("/signup", u.Signup)  // 注册
-//	ug.POST("/login", u.Login)    // 登录
-//	ug.POST("/edit", u.Edit)      // 编辑
-//	ug.GET("/profile", u.Profile) // 个人信息
-//}
 
 func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	// 分组路由
@@ -85,8 +83,17 @@ func (u *UserHandler) Signup(ctx *gin.Context) {
 		return
 	}
 
+	// 调用一下service的方法
+	err = u.svc.SignUp(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
 	ctx.String(http.StatusOK, "注册成功")
-	// 这边就是数据库操作
 }
 
 func (u *UserHandler) Login(ctx *gin.Context) {
