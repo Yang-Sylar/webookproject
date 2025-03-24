@@ -2,6 +2,7 @@ package web
 
 import (
 	regexp "github.com/dlclark/regexp2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"webook/internal/domain"
@@ -88,8 +89,12 @@ func (u *UserHandler) Signup(ctx *gin.Context) {
 		Email:    req.Email,
 		Password: req.Password,
 	})
-	if err != nil {
-		ctx.String(http.StatusOK, "系统错误")
+
+	if err == service.ErrUserDuplicateEmail {
+		ctx.String(http.StatusOK, "邮箱重复，请换一个邮箱")
+		return
+	} else if err != nil {
+		ctx.String(http.StatusOK, "服务器异常，注册失败")
 		return
 	}
 
@@ -97,7 +102,35 @@ func (u *UserHandler) Signup(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Login(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
 
+	var req LoginReq
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	user, err := u.svc.Login(ctx, domain.User{
+		Email:    req.Email,
+		Password: req.Password,
+	})
+	if err == service.ErrInvaildUserOrPassword {
+		ctx.String(http.StatusOK, "用户名或密码错误")
+		return
+	} else if err != nil {
+		ctx.String(http.StatusOK, "服务器异常，注册失败")
+		return
+	}
+
+	// 步骤2：在这里成功登陆了
+	sess := sessions.Default(ctx)
+	// 设置session的值
+	sess.Set("userId", user.Id)
+	sess.Save()
+	ctx.String(http.StatusOK, "登录成功")
+	return
 }
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
@@ -105,5 +138,5 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
-
+	ctx.String(http.StatusOK, "这是你的Profile")
 }
