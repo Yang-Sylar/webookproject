@@ -1,12 +1,12 @@
 package web
 
 import (
-	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"time"
 	"webook/internal/domain"
 	"webook/internal/service"
 )
@@ -125,7 +125,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "服务器异常，注册失败")
 		return
 	}
-	fmt.Println(user)
+
 	//// 在这里成功登陆了
 	//sess := sessions.Default(ctx)
 	//// 设置session的值
@@ -136,9 +136,17 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	//	HttpOnly: false, // 只允许http
 	//})
 	//sess.Save()
+	claims := UserClaims{
+		Uid:       user.Id,
+		UserAgent: ctx.Request.UserAgent(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)), // 过期时间
+			Issuer:    "webook",                                        // 签发人
+		},
+	}
 
 	// 用JWT实现登录态
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{"userId": 123})
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenStr, err := token.SignedString([]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"))
 	if err != nil {
 		ctx.String(http.StatusInternalServerError, "系统错误")
@@ -167,7 +175,26 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "这是你的Profile")
 }
 
+func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
+	c, ok := ctx.Get("claims")
+	// 可以断定必然有claims
+	if !ok {
+		// 可以考虑监控住这里
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	claims, ok := c.(*UserClaims) // 断言
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	println(claims.Uid)
+	// Profile 其他代码
+	ctx.String(http.StatusOK, "这是你的Profile")
+}
+
 type UserClaims struct {
-	userId int64 // 声明自己要放进去 token 里面的数据
+	Uid       int64 // 声明自己要放进去 token 里面的数据
+	UserAgent string
 	jwt.RegisteredClaims
 }

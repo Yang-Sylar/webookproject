@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"webook/internal/web"
 )
 
 // LoginJWTMiddlewareBuilder JWT登录
@@ -47,22 +48,43 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			return
 		}
 
+		claims := &web.UserClaims{}
 		tokenStr := segs[1]
-		token, err := jwt.Parse(tokenStr,
+		// ParseWithClaims 里一定要传claims指针
+		token, err := jwt.ParseWithClaims(
+			tokenStr,
+			claims,
 			func(token *jwt.Token) (interface{}, error) {
 				return []byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"), nil
 			})
 
 		if err != nil {
 			// 没登录
-			ctx.String(http.StatusUnauthorized, "未登录")
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+		if !token.Valid || token == nil || claims.Uid == 0 {
+			// 没登录
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		if !token.Valid || token == nil {
-			// 没登录
-			ctx.String(http.StatusUnauthorized, "未登录")
+		if claims.UserAgent != ctx.Request.UserAgent() {
+			// 严重的安全问题
+			// 你是要监控
+			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
+		if claims.ExpiresAt.Sub(time.Now()) < time.Second*50 {
+			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Second))
+			tokenStr, err = token.SignedString([]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"))
+			if err != nil {
+				// 记录日志
+				// 续约失败
+			}
+			ctx.Header("x-jwt-token", tokenStr)
+		}
+		ctx.Set("claims", claims)
 	}
 }

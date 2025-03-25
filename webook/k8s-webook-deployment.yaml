@@ -1,0 +1,29 @@
+# 利用 apiVersion 来确定怎么解读配置
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webook
+
+# 规格说明
+spec:
+  # pod 副本数量
+  replicas: 3
+  # 筛选器，筛选出需要的 pod
+  selector:
+    matchLabels:
+      # key 是 app，值是 webook
+      app: webook
+
+  # template 描述你的 pod 什么样子
+  template:
+    metadata:
+      labels:
+        app: webook
+    # pod 具体信息
+    spec:
+      containers:
+        - name: webook
+          image: yzletter/webook:v0.0.1
+          # 端口要对得上
+          ports:
+            - containerPort: 8080

@@ -47,5 +47,5 @@ func (svc *UserService) Login(ctx context.Context, u domain.User) (domain.User, 
 		// DEBUG
 		return domain.User{}, ErrInvaildUserOrPassword
 	}
-	return u, err
+	return r, err
 }
