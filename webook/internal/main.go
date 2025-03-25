@@ -2,8 +2,6 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -36,7 +34,7 @@ func initWebServer() *gin.Engine {
 				AllowMethods:     []string{"POST", "GET"},                   // 允许请求的方法，不写为全部方法
 				AllowHeaders:     []string{"Content-Type", "Authorization"}, //
 				AllowCredentials: true,                                      // 是否允许携带 cookie 之类的用户认证信息
-				//ExposeHeaders:    []string{"x-jwt-token"},	// 响应头里携带的东西
+				ExposeHeaders:    []string{"x-jwt-token"},                   // 响应头里携带的东西
 				// 判断来源的函数
 				AllowOriginFunc: func(origin string) bool {
 					if strings.Contains(origin, "http://localhost") {
@@ -48,17 +46,30 @@ func initWebServer() *gin.Engine {
 				MaxAge: 12 * time.Hour,
 			}))
 
-	// 步骤1
-	// session
-	store := cookie.NewStore([]byte("secret"))
-	server.Use(sessions.Sessions("mysession", store)) // cookie的name和值
-	
+	//// session基于redis实现
+	//// 最大空闲连接、tcp（不太可能用到udp）、连接信息和密码、两个key
+	//store, err := redis.NewStore(16, "tcp", "localhost:6379", "",
+	//	// authentication key, encryption key（身份认证、数据加密）外加授权认证————安全三大概念
+	//	[]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
+	//	[]byte("e5Z7W4YbVcerrtjEA77eT5J6hShjjNTp"))
+	//if err != nil {
+	//	panic(err)
+	//}
+	//server.Use(sessions.Sessions("mysession", store)) // cookie的name和值
+	//server.Use(
+	//	middleware.
+	//		NewLoginMiddlewareBuilder().
+	//		IgnorePaths("/users/signup"). // 忽略路径
+	//		IgnorePaths("/users/login").
+	//		Build())
+
 	server.Use(
 		middleware.
-			NewLoginMiddlewareBuilder().
-			IgnorePaths("/users/signup").
+			NewLoginJWTMiddlewareBuilder().
+			IgnorePaths("/users/signup"). // 忽略路径
 			IgnorePaths("/users/login").
 			Build())
+
 	return server
 }
 

@@ -1,9 +1,11 @@
 package web
 
 import (
+	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"webook/internal/domain"
 	"webook/internal/service"
@@ -123,13 +125,37 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "服务器异常，注册失败")
 		return
 	}
+	fmt.Println(user)
+	//// 在这里成功登陆了
+	//sess := sessions.Default(ctx)
+	//// 设置session的值
+	//sess.Set("userId", user.Id)
+	//sess.Options(sessions.Options{
+	//	MaxAge:   30,    // 消亡时间
+	//	Secure:   false, // 要求https协议
+	//	HttpOnly: false, // 只允许http
+	//})
+	//sess.Save()
 
-	// 步骤2：在这里成功登陆了
-	sess := sessions.Default(ctx)
-	// 设置session的值
-	sess.Set("userId", user.Id)
-	sess.Save()
+	// 用JWT实现登录态
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{"userId": 123})
+	tokenStr, err := token.SignedString([]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"))
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	ctx.Header("x-jwt-token", tokenStr)
 	ctx.String(http.StatusOK, "登录成功")
+	return
+}
+
+func (u *UserHandler) Logout(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Options(sessions.Options{
+		MaxAge: -1,
+	})
+	sess.Save()
+	ctx.String(http.StatusOK, "退出成功")
 	return
 }
 
@@ -139,4 +165,9 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "这是你的Profile")
+}
+
+type UserClaims struct {
+	userId int64 // 声明自己要放进去 token 里面的数据
+	jwt.RegisteredClaims
 }
