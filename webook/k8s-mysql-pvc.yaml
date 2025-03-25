@@ -1,0 +1,23 @@
+# pvc => PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  # mysql 要用的东西
+  # k8s 有什么
+  name: webook-mysql-claim
+  # label 随便写
+  labels:
+    app: webook-mysql-claim
+
+spec:
+  # 随便写写
+  storageClassName: manual
+  # 控制能不能被多个 pod 读写：ReadWriteOnce（一个读写）ReadOnlyMany(多个读，一个写）ReadWriteMany（多个读写）
+  accessModes:
+    - ReadWriteOnce
+  # 究竟需要什么样的资源
+  resources:
+    requests:
+      storage : 1Gi
+
+  

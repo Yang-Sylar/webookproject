@@ -1,0 +1,17 @@
+apiVersion: v1
+# 指我k8s有哪些volume
+kind: PersistentVolume
+metadata:
+  name: my-local-pv
+spec:
+  storageClassName: manual
+  # 各种容量
+  capacity:
+    # 存储容量
+    storage : 1Gi
+  # 支持的访问方式
+  accessModes:
+    - ReadWriteOnce
+  # 本 pv 的根目录
+  hostPath:
+    path: /mnt/data
