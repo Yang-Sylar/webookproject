@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webook
-
 # 规格说明
 spec:
   # pod 副本数量
@@ -13,7 +12,6 @@ spec:
     matchLabels:
       # key 是 app，值是 webook
       app: webook
-
   # template 描述你的 pod 什么样子
   template:
     metadata:

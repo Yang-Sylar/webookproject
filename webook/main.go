@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"webook/config"
 	"webook/internal/repository"
 	"webook/internal/repository/dao"
 	"webook/internal/service"
@@ -20,12 +21,12 @@ import (
 )
 
 func main() {
-	//db := initDB()
-	//server := initWebServer()
+	db := initDB()
+	server := initWebServer()
 
-	//u := initUser(db)
-	//u.RegisterRoutes(server)
-	server := gin.Default()
+	u := initUser(db)
+	u.RegisterRoutes(server)
+	//server := gin.Default()
 	server.GET("/hello", func(ctx *gin.Context) {
 		ctx.String(http.StatusOK, "K8s部署测试")
 	})
@@ -36,7 +37,7 @@ func initWebServer() *gin.Engine {
 	server := gin.Default()
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: config.Config.Redis.Addr,
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 
@@ -98,7 +99,7 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
 		// 我只会在初始化过程中 panic
 		// panic 相当于整个 goroutine 结束
