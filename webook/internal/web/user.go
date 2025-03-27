@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -39,8 +40,9 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	// 分组路由
 	ug := server.Group("/users")
 
-	ug.POST("/signup", u.Signup)  // 注册
-	ug.POST("/login", u.Login)    // 登录
+	ug.POST("/signup", u.Signup) // 注册
+	ug.POST("/login", u.Login)   // 登录
+
 	ug.POST("/edit", u.Edit)      // 编辑
 	ug.GET("/profile", u.Profile) // 个人信息
 }
@@ -118,6 +120,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		Email:    req.Email,
 		Password: req.Password,
 	})
+
 	if err == service.ErrInvaildUserOrPassword {
 		ctx.String(http.StatusOK, "用户名或密码错误")
 		return
@@ -140,8 +143,8 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		Uid:       user.Id,
 		UserAgent: ctx.Request.UserAgent(),
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)), // 过期时间
-			Issuer:    "webook",                                        // 签发人
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)), // 过期时间
+			Issuer:    "webook",                                      // 签发人
 		},
 	}
 
@@ -168,11 +171,100 @@ func (u *UserHandler) Logout(ctx *gin.Context) {
 }
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
+	type EditReq struct {
+		Nickname string `json:"nickname"`
+		Birthday string `json:"birthday"`
+		AboutMe  string `json:"aboutMe"`
+	}
 
+	var req EditReq
+	// 1. 获取参数
+	//{nickname: "yzleter", birthday: "2025-03-27", aboutMe: "golang backend engineer"}
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	// 2. 校验参数
+	if len(req.Nickname) > 20 {
+		ctx.String(http.StatusOK, "昵称过长")
+		return
+	}
+
+	TimeLayout := "2006-01-02"
+	bdate, err := time.Parse(TimeLayout, req.Birthday)
+	if err != nil {
+		ctx.String(http.StatusOK, "日期错误")
+		return
+	}
+
+	if len(req.AboutMe) > 200 {
+		ctx.String(http.StatusOK, "简介过长")
+		return
+	}
+
+	// 拿 userid
+	c, ok := ctx.Get("claims")
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	claims, ok := c.(*UserClaims)
+	fmt.Println(claims.Uid)
+	fmt.Println(req)
+
+	// 3. 处理业务
+	err = u.svc.UpdateNonSensitiveInfo(ctx, domain.User{
+		Id:       claims.Uid,
+		Nickname: req.Nickname,
+		Birthday: bdate,
+		AboutMe:  req.AboutMe,
+	})
+
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "修改失败")
+		return
+	}
+
+	// 4. 退出
+	ctx.String(http.StatusOK, "修改成功")
+	return
 }
 
 func (u *UserHandler) Profile(ctx *gin.Context) {
-	ctx.String(http.StatusOK, "这是你的Profile")
+
+	c, ok := ctx.Get("claims")
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	claims, ok := c.(*UserClaims)
+	if !ok {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+
+	uback, err := u.svc.GetProfile(ctx, claims.Uid)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+
+	}
+
+	type User struct {
+		Nickname string `json:"Nickname"`
+		Email    string `json:"Email"`
+		AboutMe  string `json:"AboutMe"`
+		Birthday string `json:"Birthday"`
+	}
+
+	ctx.JSON(http.StatusOK, User{
+		Nickname: uback.Nickname,
+		Email:    uback.Email,
+		AboutMe:  uback.AboutMe,
+		Birthday: uback.Birthday.Format(time.DateOnly),
+	})
 }
 
 func (u *UserHandler) ProfileJWT(ctx *gin.Context) {

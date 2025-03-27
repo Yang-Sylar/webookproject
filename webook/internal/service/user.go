@@ -49,3 +49,11 @@ func (svc *UserService) Login(ctx context.Context, u domain.User) (domain.User, 
 	}
 	return r, err
 }
+
+func (svc *UserService) UpdateNonSensitiveInfo(ctx context.Context, u domain.User) error {
+	return svc.repo.UpdateNonZeroFields(ctx, u)
+}
+
+func (svc *UserService) GetProfile(ctx context.Context, id int64) (domain.User, error) {
+	return svc.repo.FindById(ctx, id)
+}

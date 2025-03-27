@@ -28,6 +28,12 @@ func (dao *UserDAO) FindByEmail(ctx context.Context, email string) (User, error)
 	return u, err
 }
 
+func (dao *UserDAO) FindById(ctx context.Context, id int64) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("id = ?", id).First(&u).Error
+	return u, err
+}
+
 func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	// 存秒数 / 存纳秒数 / 存毫秒数
 	now := time.Now().UnixMilli()
@@ -47,6 +53,16 @@ func (dao *UserDAO) Insert(ctx context.Context, u User) error {
 	return err
 }
 
+func (dao *UserDAO) UpdateById(ctx context.Context, u User) error {
+	return dao.db.WithContext(ctx).Model(&u).Where("id = ?", u.Id).
+		Updates(map[string]any{
+			"Utime":    time.Now().UnixMilli(),
+			"Nickname": u.Nickname,
+			"Birthday": u.Birthday,
+			"AboutMe":  u.AboutMe,
+		}).Error
+}
+
 // User 直接对应于数据库表结构，有些人叫做 entity，有些人叫做 model，也有人叫做 PO (persistent object)
 type User struct {
 	Id       int64  `gorm:"primaryKey, autoIncrement"`
@@ -56,4 +72,9 @@ type User struct {
 	Ctime int64
 	// 更新时间
 	Utime int64
+
+	// Profile
+	Nickname string `gorm:"type=varchar(128)"`
+	Birthday int64
+	AboutMe  string `gorm:"type=varchar(4096)"`
 }

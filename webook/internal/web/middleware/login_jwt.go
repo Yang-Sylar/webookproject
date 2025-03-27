@@ -77,7 +77,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 		}
 
 		if claims.ExpiresAt.Sub(time.Now()) < time.Second*50 {
-			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Second))
+			claims.ExpiresAt = jwt.NewNumericDate(time.Now().Add(time.Hour))
 			tokenStr, err = token.SignedString([]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"))
 			if err != nil {
 				// 记录日志

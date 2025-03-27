@@ -36,12 +36,13 @@ func main() {
 func initWebServer() *gin.Engine {
 	server := gin.Default()
 
+	// 限流
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: config.Config.Redis.Addr,
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 
-	// Use 作用于全部路由
+	// Use 跨域问题，作用于全部路由
 	server.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:3000"},         // 允许请求的路由来源，* 为全部来源（一般不写）
 		AllowMethods:     []string{"POST", "GET"},                   // 允许请求的方法，不写为全部方法
