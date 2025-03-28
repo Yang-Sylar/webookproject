@@ -13,6 +13,7 @@ import (
 	"time"
 	"webook/config"
 	"webook/internal/repository"
+	"webook/internal/repository/cache"
 	"webook/internal/repository/dao"
 	"webook/internal/service"
 	"webook/internal/web"
@@ -22,9 +23,11 @@ import (
 
 func main() {
 	db := initDB()
-	server := initWebServer()
+	redisClient := initRedis()
 
-	u := initUser(db)
+	server := initWebServer(redisClient)
+
+	u := initUser(db, redisClient)
 	u.RegisterRoutes(server)
 	//server := gin.Default()
 	server.GET("/hello", func(ctx *gin.Context) {
@@ -33,14 +36,15 @@ func main() {
 	server.Run(":8080")
 }
 
-func initWebServer() *gin.Engine {
+func initWebServer(cmd redis.Cmdable) *gin.Engine {
 	server := gin.Default()
 
 	// 限流
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: config.Config.Redis.Addr,
-	})
-	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
+	//redisClient := redis.NewClient(&redis.Options{
+	//	Addr: config.Config.Redis.Addr,
+	//})
+	// 限流
+	server.Use(ratelimit.NewBuilder(cmd, time.Second, 100).Build())
 
 	// Use 跨域问题，作用于全部路由
 	server.Use(cors.New(cors.Config{
@@ -69,6 +73,7 @@ func initWebServer() *gin.Engine {
 	//if err != nil {
 	//	panic(err)
 	//}
+
 	store := memstore.NewStore(
 		[]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
 		[]byte("e5Z7W4YbVcerrtjEA77eT5J6hShjjNTp"))
@@ -91,12 +96,19 @@ func initWebServer() *gin.Engine {
 	return server
 }
 
-func initUser(db *gorm.DB) *web.UserHandler {
+func initUser(db *gorm.DB, redis redis.Cmdable) *web.UserHandler {
 	ud := dao.NewUserDAO(db)
-	repo := repository.NewUserRepository(ud)
+	ur := cache.NewUserCache(redis)
+	repo := repository.NewUserRepository(ud, ur)
 	svc := service.NewUserService(repo)
 	u := web.NewUserHandler(svc)
 	return u
+}
+
+func initRedis() redis.Cmdable {
+	return redis.NewClient(&redis.Options{
+		Addr: config.Config.Redis.Addr,
+	})
 }
 
 func initDB() *gorm.DB {

@@ -55,5 +55,6 @@ func (svc *UserService) UpdateNonSensitiveInfo(ctx context.Context, u domain.Use
 }
 
 func (svc *UserService) GetProfile(ctx context.Context, id int64) (domain.User, error) {
-	return svc.repo.FindById(ctx, id)
+	u, err := svc.repo.FindById(ctx, id)
+	return u, err
 }

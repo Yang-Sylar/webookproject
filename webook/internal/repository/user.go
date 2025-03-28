@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 	"webook/internal/domain"
+	"webook/internal/repository/cache"
 	"webook/internal/repository/dao"
 )
 
@@ -13,12 +14,14 @@ var (
 )
 
 type UserRepository struct {
-	dao *dao.UserDAO
+	dao   *dao.UserDAO
+	cache *cache.UserCache
 }
 
-func NewUserRepository(dao *dao.UserDAO) *UserRepository {
+func NewUserRepository(dao *dao.UserDAO, cache *cache.UserCache) *UserRepository {
 	return &UserRepository{
-		dao: dao,
+		dao:   dao,
+		cache: cache,
 	}
 }
 
@@ -58,20 +61,42 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (domain.
 }
 
 func (r *UserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
-	u, err := r.dao.FindById(ctx, id)
 
+	// 先从缓存找
+	u, err := r.cache.Get(ctx, id)
+	if err == nil {
+		return u, err
+	}
+
+	// 缓存没这个数据
+	if err == cache.ErrUserNotFound {
+		// 去数据库里加载
+		// 考虑 Redis 可能崩了，大量访问直接把数据库也崩了
+	}
+
+	ur, err := r.dao.FindById(ctx, id)
 	if err != nil {
 		return domain.User{}, err
 	}
-	
-	return domain.User{
-		Email:    u.Email,
-		Nickname: u.Nickname,
-		Birthday: time.UnixMilli(u.Birthday),
-		AboutMe:  u.AboutMe,
-	}, err
 
-	//先从 cache 找
-	//再从数据库找
-	//找到写回 cache
+	u = domain.User{
+		Id:       ur.Id,
+		Email:    ur.Email,
+		Nickname: ur.Nickname,
+		Birthday: time.UnixMilli(ur.Birthday),
+		AboutMe:  ur.AboutMe,
+	}
+
+	//go func() {
+	//	err = r.cache.Set(ctx, u)
+	//	if err != nil {
+	//		// 做好监控
+	//	}
+	//}()
+	err = r.cache.Set(ctx, u)
+	if err != nil {
+		// 做好监控
+	}
+	return u, err
+
 }
