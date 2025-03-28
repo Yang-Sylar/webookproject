@@ -12,20 +12,20 @@ import (
 
 // 这个需要手动跑，也就是你需要在本地搞好这些环境变量
 func TestSender(t *testing.T) {
-	secretId, ok := os.LookupEnv("")
+	secretId, ok := os.LookupEnv("id")
 	if !ok {
 		t.Fatal()
 	}
-	secretKey, ok := os.LookupEnv("")
+	secretKey, ok := os.LookupEnv("key")
 
 	c, err := sms.NewClient(common.NewCredential(secretId, secretKey),
-		"",
+		"ap-nanjing",
 		profile.NewClientProfile())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	s := NewService(c, "", "")
+	s := NewService(c, "123", "xx科技")
 
 	testCases := []struct {
 		name    string
@@ -35,11 +35,11 @@ func TestSender(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:   "",
-			tplId:  "",
-			params: []string{""},
+			name:   "发送验证码",
+			tplId:  "1877556",
+			params: []string{"123456"},
 			// 改成你的手机号码
-			numbers: []string{""},
+			numbers: []string{"12300000000"},
 		},
 	}
 	for _, tc := range testCases {
