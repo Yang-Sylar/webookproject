@@ -6,18 +6,17 @@ import (
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 	sms "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms/v20210111"
-	"os"
 	"testing"
 )
 
 // 这个需要手动跑，也就是你需要在本地搞好这些环境变量
 func TestSender(t *testing.T) {
-	secretId, ok := os.LookupEnv("id")
-	if !ok {
-		t.Fatal()
-	}
-	secretKey, ok := os.LookupEnv("key")
-
+	//secretId, ok := os.LookupEnv("id")
+	//if !ok {
+	//	t.Fatal()
+	//}
+	//secretKey, ok := os.LookupEnv("key")
+	secretId, secretKey := "1", "2"
 	c, err := sms.NewClient(common.NewCredential(secretId, secretKey),
 		"ap-nanjing",
 		profile.NewClientProfile())
