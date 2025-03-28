@@ -15,12 +15,16 @@ const onFinish = (values: any) => {
             if(res.status != 200) {
                 alert(res.statusText);
                 return
-            }
-            if (res.data?.code == 0) {
+            } else {
+                alert(res.data);
                 router.push('/users/profile')
                 return
             }
-            alert(res.data?.msg || "系统错误");
+            // if (res.data?.code == 0) {
+            //     router.push('/users/profile')
+            //     return
+            // }
+            // alert(res.data?.msg || "系统错误");
         }).catch((err) => {
         alert(err);
     })
