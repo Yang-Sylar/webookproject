@@ -19,5 +19,8 @@ spec:
         - name: webook-redis
           image: redis:latest
           imagePullPolicy: IfNotPresent
+          ports:
+            #           Redis 都是监听 6379 的
+            - containerPort: 6379
       restartPolicy: Always
       
