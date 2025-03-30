@@ -35,8 +35,15 @@ func (r *UserRepository) UpdateNonZeroFields(ctx context.Context, u domain.User)
 	if err != nil {
 		return err
 	}
+
+	// 在这里更新缓存
+	err = r.cache.Set(ctx, u)
+	if err != nil {
+		// 做好监控
+	}
+
 	return err
-	// 在这里操作缓存
+
 }
 
 func (r *UserRepository) Create(ctx context.Context, u domain.User) error {

@@ -51,7 +51,6 @@ func (c *CodeCache) Set(ctx context.Context, biz, phone, code string) error {
 		// 其它响应码，不知道是啥鬼东西
 		// TODO 按照道理，这里要考虑记录日志，但是我们暂时还没有日志模块，所以暂时不管
 		return errors.New("系统错误")
-
 	}
 
 }

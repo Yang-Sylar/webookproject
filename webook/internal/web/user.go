@@ -15,11 +15,18 @@ import (
 // UserHandler 用于在上面定义所有跟user有关的路由
 type UserHandler struct {
 	svc         *service.UserService
+	codeSvc     *service.CodeService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
 }
 
-func NewUserHandler(svc *service.UserService) *UserHandler {
+type UserClaims struct {
+	Uid       int64 // 声明自己要放进去 token 里面的数据
+	UserAgent string
+	jwt.RegisteredClaims
+}
+
+func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *UserHandler {
 	// 正则表达式
 	const (
 		emailRegexPattern    = `^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$`
@@ -31,6 +38,7 @@ func NewUserHandler(svc *service.UserService) *UserHandler {
 	// 返回指针
 	return &UserHandler{
 		svc:         svc,
+		codeSvc:     codeSvc,
 		emailExp:    emailExp,
 		passwordExp: passwordExp,
 	}
@@ -45,6 +53,9 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 
 	ug.POST("/edit", u.Edit)      // 编辑
 	ug.GET("/profile", u.Profile) // 个人信息
+
+	ug.POST("/login_sms/code/send", u.SendLoginSMSCode)
+	ug.POST("/login_sms", u.LoginSMS)
 }
 
 func (u *UserHandler) Signup(ctx *gin.Context) {
@@ -227,7 +238,10 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 	}
 
 	// 4. 退出
-	ctx.String(http.StatusOK, "修改成功")
+	ctx.JSON(http.StatusOK, Result{
+		Code: 0,
+		Msg:  "修改成功",
+	})
 	return
 }
 
@@ -285,8 +299,35 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "这是你的Profile")
 }
 
-type UserClaims struct {
-	Uid       int64 // 声明自己要放进去 token 里面的数据
-	UserAgent string
-	jwt.RegisteredClaims
+func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
+
+	type Req struct {
+		Phone string `json:"phone"`
+	}
+
+	const biz = "login"
+
+	var req Req
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+
+	err := u.codeSvc.Send(ctx, biz, req.Phone)
+
+	fmt.Println(1)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "发送失败",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: 1,
+		Msg:  "发送成功",
+	})
+}
+
+func (u *UserHandler) LoginSMS(ctx *gin.Context) {
+	ctx.String(http.StatusOK, "登录成功")
 }

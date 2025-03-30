@@ -8,7 +8,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"net/http"
 	"strings"
 	"time"
 	"webook/config"
@@ -16,6 +15,7 @@ import (
 	"webook/internal/repository/cache"
 	"webook/internal/repository/dao"
 	"webook/internal/service"
+	"webook/internal/service/sms/memory"
 	"webook/internal/web"
 	"webook/internal/web/middleware"
 	"webook/pkg/XtremeGin/middlewares/ratelimit"
@@ -29,10 +29,7 @@ func main() {
 
 	u := initUser(db, redisClient)
 	u.RegisterRoutes(server)
-	//server := gin.Default()
-	server.GET("/hello", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "K8s部署测试")
-	})
+	
 	server.Run(":8080")
 }
 
@@ -91,6 +88,8 @@ func initWebServer(cmd redis.Cmdable) *gin.Engine {
 			NewLoginJWTMiddlewareBuilder().
 			IgnorePaths("/users/signup"). // 忽略路径
 			IgnorePaths("/users/login").
+			IgnorePaths("/users/login_sms/code/send").
+			IgnorePaths("/users/login_sms/").
 			Build())
 
 	return server
@@ -101,7 +100,14 @@ func initUser(db *gorm.DB, redis redis.Cmdable) *web.UserHandler {
 	ur := cache.NewUserCache(redis)
 	repo := repository.NewUserRepository(ud, ur)
 	svc := service.NewUserService(repo)
-	u := web.NewUserHandler(svc)
+
+	// 验证码
+	codeCache := cache.NewCodeCache(redis)
+	codeSms := memory.NewService() // 用本地进行测试
+	codeRepo := repository.NewCodeRepository(codeCache)
+	codeSvc := service.NewCodeService(codeRepo, codeSms)
+
+	u := web.NewUserHandler(svc, codeSvc)
 	return u
 }
 
