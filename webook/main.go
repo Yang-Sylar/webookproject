@@ -24,12 +24,13 @@ import (
 func main() {
 	db := initDB()
 	redisClient := initRedis()
-
 	server := initWebServer(redisClient)
-
 	u := initUser(db, redisClient)
+
+	// 注册路由
 	u.RegisterRoutes(server)
-	
+
+	// 运行
 	server.Run(":8080")
 }
 
@@ -89,7 +90,7 @@ func initWebServer(cmd redis.Cmdable) *gin.Engine {
 			IgnorePaths("/users/signup"). // 忽略路径
 			IgnorePaths("/users/login").
 			IgnorePaths("/users/login_sms/code/send").
-			IgnorePaths("/users/login_sms/").
+			IgnorePaths("/users/login_sms").
 			Build())
 
 	return server
@@ -111,12 +112,14 @@ func initUser(db *gorm.DB, redis redis.Cmdable) *web.UserHandler {
 	return u
 }
 
+// 初始化Redis
 func initRedis() redis.Cmdable {
 	return redis.NewClient(&redis.Options{
 		Addr: config.Config.Redis.Addr,
 	})
 }
 
+// 初始化MySQL
 func initDB() *gorm.DB {
 	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {

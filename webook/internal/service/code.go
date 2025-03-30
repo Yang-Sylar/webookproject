@@ -10,6 +10,11 @@ import (
 
 const codeTplid = "1877556"
 
+var (
+	ErrCodeVerifyTooManyTimes = repository.ErrCodeVerifyTooManyTimes
+	ErrCodeSendTooMany        = repository.ErrCodeSendTooMany
+)
+
 type CodeService struct {
 	repo   *repository.CodeRepository
 	smsSvc sms.Service
@@ -50,7 +55,7 @@ func (svc *CodeService) Send(ctx context.Context,
 func (svc *CodeService) Verify(ctx context.Context,
 	// 区别业务场景
 	biz string,
-	code string, phone string) (bool, error) {
+	phone string, code string) (bool, error) {
 
 	return svc.repo.Verify(ctx, biz, phone, code)
 }

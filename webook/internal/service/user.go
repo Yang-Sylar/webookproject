@@ -54,6 +54,22 @@ func (svc *UserService) UpdateNonSensitiveInfo(ctx context.Context, u domain.Use
 	return svc.repo.UpdateNonZeroFields(ctx, u)
 }
 
+func (svc *UserService) FindOrCreateByPhone(ctx context.Context, phone string) (domain.User, error) {
+	u, err := svc.repo.FindByPhone(ctx, phone)
+	if err != repository.ErrUserNotFound {
+		return u, err
+	}
+	u = domain.User{
+		Phone: phone,
+	}
+	err = svc.repo.Create(ctx, u)
+	if err != nil {
+		return u, err
+	}
+
+	return svc.repo.FindByPhone(ctx, phone)
+}
+
 func (svc *UserService) GetProfile(ctx context.Context, id int64) (domain.User, error) {
 	u, err := svc.repo.FindById(ctx, id)
 	return u, err
