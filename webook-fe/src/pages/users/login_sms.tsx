@@ -35,7 +35,9 @@ const LoginFormSMS: React.FC = () => {
                 alert(res.statusText);
                 return
             }
+            // alert(res.data)
             alert(res?.data?.msg || "系统错误，请重试")
+
         }).catch((err) => {
             alert(err);
         })
