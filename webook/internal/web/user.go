@@ -105,7 +105,7 @@ func (u *UserHandler) Signup(ctx *gin.Context) {
 		Password: req.Password,
 	})
 
-	if err == service.ErrUserDuplicateEmail {
+	if err == service.ErrUserDuplicate {
 		ctx.String(http.StatusOK, "邮箱重复，请换一个邮箱")
 		return
 	} else if err != nil {
@@ -378,6 +378,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		})
 		return
 	}
+	
 	if err = u.setJWTToken(ctx, ub.Id); err != nil {
 		ctx.JSON(http.StatusOK, &Result{
 			Code: 5,

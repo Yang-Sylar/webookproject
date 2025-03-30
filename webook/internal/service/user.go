@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrUserDuplicateEmail    = repository.ErrUserDuplicateEmail
+	ErrUserDuplicate         = repository.ErrUserDuplicate
 	ErrInvaildUserOrPassword = errors.New("账号或密码不对")
 )
 
@@ -66,7 +66,6 @@ func (svc *UserService) FindOrCreateByPhone(ctx context.Context, phone string) (
 	if err != nil {
 		return u, err
 	}
-
 	return svc.repo.FindByPhone(ctx, phone)
 }
 

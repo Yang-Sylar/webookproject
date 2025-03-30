@@ -34,12 +34,16 @@ func NewUserCache(client redis.Cmdable) *UserCache {
 
 // 如果没有数据，返回一个特定的err
 func (cache *UserCache) Get(ctx context.Context, id int64) (domain.User, error) {
+
 	key := cache.key(id)
 	val, err := cache.client.Get(ctx, key).Bytes()
+
 	if err != nil {
 		return domain.User{}, ErrUserNotFound
 	}
+
 	var u domain.User
+
 	// 反序列化
 	err = json.Unmarshal(val, &u)
 	return u, err

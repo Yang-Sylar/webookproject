@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrUserDuplicateEmail = dao.ErrUserDuplicateEmail
-	ErrUserNotFound       = dao.ErrUserNotFound
+	ErrUserDuplicate = dao.ErrUserDuplicate
+	ErrUserNotFound  = dao.ErrUserNotFound
 )
 
 type UserRepository struct {
@@ -88,13 +88,13 @@ func (r *UserRepository) FindById(ctx context.Context, id int64) (domain.User, e
 	}
 
 	u = r.entityToDomain(ur)
-
 	//go func() {
 	//	err = r.cache.Set(ctx, u)
 	//	if err != nil {
 	//		// 做好监控
 	//	}
 	//}()
+
 	err = r.cache.Set(ctx, u)
 	if err != nil {
 		// 做好监控
@@ -128,5 +128,8 @@ func (r *UserRepository) entityToDomain(u dao.User) domain.User {
 		Phone:    u.Phone.String,
 		Password: u.Password,
 		Ctime:    time.UnixMilli(u.Ctime),
+		Nickname: u.Nickname,
+		Birthday: time.UnixMilli(u.Birthday),
+		AboutMe:  u.AboutMe,
 	}
 }
