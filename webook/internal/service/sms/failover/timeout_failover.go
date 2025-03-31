@@ -30,7 +30,7 @@ func (t TimeoutFailoverSMSService) Send(ctx context.Context, tpl string, args []
 			// 我成功挪了一位，即指向了新服务商，累计访问次数清零
 			atomic.StoreInt32(&t.cnt, 0)
 		}
-		// else 就是出现并发了
+		// else 就是出现并发了，更新idx
 		idx = atomic.LoadInt32(&t.idx)
 	}
 
@@ -45,6 +45,7 @@ func (t TimeoutFailoverSMSService) Send(ctx context.Context, tpl string, args []
 		// 不知道什么错误
 		// 你可以考虑 切
 		return err
+
 	}
 
 	return err
