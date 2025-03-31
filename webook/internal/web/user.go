@@ -289,24 +289,6 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 	})
 }
 
-func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
-	c, ok := ctx.Get("claims")
-	// 可以断定必然有claims
-	if !ok {
-		// 可以考虑监控住这里
-		ctx.String(http.StatusInternalServerError, "系统错误")
-		return
-	}
-	claims, ok := c.(*UserClaims) // 断言
-	if !ok {
-		ctx.String(http.StatusInternalServerError, "系统错误")
-		return
-	}
-	println(claims.Uid)
-	// Profile 其他代码
-	ctx.String(http.StatusOK, "这是你的Profile")
-}
-
 func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 
 	type Req struct {
@@ -378,7 +360,7 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		})
 		return
 	}
-	
+
 	if err = u.setJWTToken(ctx, ub.Id); err != nil {
 		ctx.JSON(http.StatusOK, &Result{
 			Code: 5,
