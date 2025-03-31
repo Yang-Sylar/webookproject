@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -16,8 +15,8 @@ const biz = "login"
 
 // UserHandler 用于在上面定义所有跟user有关的路由
 type UserHandler struct {
-	svc         *service.UserService
-	codeSvc     *service.CodeService
+	svc         *service.MyUserService
+	codeSvc     *service.MyCodeService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
 }
@@ -28,7 +27,7 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *UserHandler {
+func NewUserHandler(svc *service.MyUserService, codeSvc *service.MyCodeService) *UserHandler {
 	// 正则表达式
 	const (
 		emailRegexPattern    = `^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$`
@@ -229,8 +228,6 @@ func (u *UserHandler) Edit(ctx *gin.Context) {
 		return
 	}
 	claims, ok := c.(*UserClaims)
-	fmt.Println(claims.Uid)
-	fmt.Println(req)
 
 	// 3. 处理业务
 	err = u.svc.UpdateNonSensitiveInfo(ctx, domain.User{
