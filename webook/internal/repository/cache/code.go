@@ -29,7 +29,7 @@ type RedisCodeCache struct {
 	client redis.Cmdable
 }
 
-func NewCodeCache(client redis.Cmdable) *RedisCodeCache {
+func NewRedisCodeCache(client redis.Cmdable) *RedisCodeCache {
 	return &RedisCodeCache{
 		client: client,
 	}

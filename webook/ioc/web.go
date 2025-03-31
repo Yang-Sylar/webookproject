@@ -9,6 +9,7 @@ import (
 	"webook/internal/web"
 	"webook/internal/web/middleware"
 	"webook/pkg/XtremeGin/middlewares/ratelimit"
+	"webook/pkg/limiter"
 )
 
 func InitGin(mdls []gin.HandlerFunc, hdl *web.UserHandler) *gin.Engine {
@@ -19,9 +20,10 @@ func InitGin(mdls []gin.HandlerFunc, hdl *web.UserHandler) *gin.Engine {
 }
 
 func InitMiddlewares(redisclient redis.Cmdable) []gin.HandlerFunc {
+
 	return []gin.HandlerFunc{
 		// 限流
-		ratelimit.NewBuilder(redisclient, time.Second, 100).Build(),
+		ratelimit.NewBuilder(limiter.NewRedisSlidingWindowLimiter(redisclient, time.Second, 1000)).Build(),
 		// 跨域
 		cors.New(cors.Config{
 			AllowOrigins:     []string{"http://localhost:3000"},         // 允许请求的路由来源，* 为全部来源（一般不写）

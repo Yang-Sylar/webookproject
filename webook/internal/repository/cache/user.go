@@ -25,7 +25,7 @@ type RedisUserCache struct {
 // A 用到 B，B 一定是接口
 // A 用到 B，B 一定是 A 的字段
 // A 用到 B，A 绝对不初始化 B，而是注入
-func NewUserCache(client redis.Cmdable) *RedisUserCache {
+func NewRedisUserCache(client redis.Cmdable) *RedisUserCache {
 	return &RedisUserCache{
 		client:     client,
 		expiration: time.Minute * 15,
