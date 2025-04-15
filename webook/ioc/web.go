@@ -42,8 +42,7 @@ func InitMiddlewares(redisclient redis.Cmdable) []gin.HandlerFunc {
 			MaxAge: 12 * time.Hour,
 		}),
 		// JWT
-		middleware.
-			NewLoginJWTMiddlewareBuilder().
+		middleware.NewLoginJWTMiddlewareBuilder().
 			IgnorePaths("/users/signup"). // 忽略路径
 			IgnorePaths("/users/login").
 			IgnorePaths("/users/login_sms/code/send").

@@ -16,7 +16,7 @@ import (
 func initWebServer() *gin.Engine {
 
 	wire.Build(
-		// 最基础的
+		// 最基础的 Redis、MySQL
 		ioc.InitRedis,
 		ioc.InitDB,
 		// User DAO
@@ -33,7 +33,7 @@ func initWebServer() *gin.Engine {
 
 		// Web
 		web.NewUserHandler,
-
+		// 服务、中间件
 		ioc.InitSMSService,
 		ioc.InitMiddlewares,
 		ioc.InitGin,
