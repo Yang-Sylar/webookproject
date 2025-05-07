@@ -19,6 +19,7 @@ type UserHandler struct {
 	codeSvc     *service.MyCodeService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
+	jwtHandler
 }
 
 type UserClaims struct {
@@ -36,12 +37,14 @@ func NewUserHandler(svc *service.MyUserService, codeSvc *service.MyCodeService) 
 	// 预编译
 	emailExp := regexp.MustCompile(emailRegexPattern, regexp.None)
 	passwordExp := regexp.MustCompile(passwordRegexPattern, regexp.None)
+
 	// 返回指针
 	return &UserHandler{
 		svc:         svc,
 		codeSvc:     codeSvc,
 		emailExp:    emailExp,
 		passwordExp: passwordExp,
+		jwtHandler:  newJWTHandler(),
 	}
 }
 
@@ -55,6 +58,7 @@ func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug.GET("/profile", u.Profile)                       // 个人信息
 	ug.POST("/login_sms/code/send", u.SendLoginSMSCode) // 发送验证码
 	ug.POST("/login_sms", u.LoginSMS)                   // 校验
+	ug.POST("/refresh_token", u.RefreshToken)           //
 }
 
 func (u *UserHandler) Signup(ctx *gin.Context) {
@@ -149,33 +153,19 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	//	HttpOnly: false, // 只允许http
 	//})
 	//sess.Save()
+
 	if err = u.setJWTToken(ctx, user.Id); err != nil {
 		ctx.String(http.StatusOK, "系统错误")
 		return
 	}
+
+	if err = u.setRefreshToken(ctx, user.Id); err != nil {
+		ctx.String(http.StatusOK, "系统错误")
+		return
+	}
+
 	ctx.String(http.StatusOK, "登录成功")
 	return
-}
-
-func (u *UserHandler) setJWTToken(ctx *gin.Context, uid int64) error {
-	claims := UserClaims{
-		Uid:       uid,
-		UserAgent: ctx.Request.UserAgent(),
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)), // 过期时间
-			Issuer:    "webook",                                      // 签发人
-		},
-	}
-
-	// 用JWT实现登录态
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenStr, err := token.SignedString([]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"))
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, "系统错误")
-		return err
-	}
-	ctx.Header("x-jwt-token", tokenStr)
-	return nil
 }
 
 func (u *UserHandler) Logout(ctx *gin.Context) {
@@ -366,8 +356,41 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 		return
 	}
 
+	if err = u.setRefreshToken(ctx, ub.Id); err != nil {
+		// 记录日志
+		ctx.JSON(http.StatusOK, &Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, &Result{
 		Code: 0,
 		Msg:  "验证码校验通过",
+	})
+}
+
+func (u *UserHandler) RefreshToken(ctx *gin.Context) {
+	// 只有这个接口拿出来的才是 RefreshToken
+	refreshToken := ExtractToken(ctx)
+
+	var rc RefreshClaims
+	token, err := jwt.ParseWithClaims(refreshToken, &rc, func(token *jwt.Token) (interface{}, error) {
+		return u.rtKey, nil
+	})
+
+	if err != nil || !token.Valid {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	err = u.setJWTToken(ctx, rc.Uid)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Msg: "刷新成功",
 	})
 }

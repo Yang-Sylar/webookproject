@@ -14,9 +14,6 @@ type Builder struct {
 	limiter limiter.Limiter
 }
 
-//go:embed slide_window.lua
-var luaScript string
-
 func NewBuilder(limiter limiter.Limiter) *Builder {
 	return &Builder{
 		prefix:  "ip-limiter",

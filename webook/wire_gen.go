@@ -17,7 +17,6 @@ import (
 )
 
 // Injectors from wire.go:
-
 func initWebServer() *gin.Engine {
 	cmdable := ioc.InitRedis()
 	v := ioc.InitMiddlewares(cmdable)

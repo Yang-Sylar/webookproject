@@ -4,6 +4,7 @@ import (
 	"webook/internal/service/oauth2/wechat"
 )
 
+// todo 微信扫码登录
 func InitOAuth2WechatService() wechat.Service {
 	appId := "1"
 	//appId, ok := os.LookupEnv("WECHAT_APP_ID")
@@ -13,7 +14,7 @@ func InitOAuth2WechatService() wechat.Service {
 
 	//appKey, ok := os.LookupEnv("WECHAT_APP_SECRET")
 	//if !ok {
-	//panic("没有找到环境变量 WECHAT_APP_SECRET")
+	//	panic("没有找到环境变量 WECHAT_APP_SECRET")
 	//}
-	return wechat.NewService(appId)
+	return wechat.NewService(appId, appId)
 }

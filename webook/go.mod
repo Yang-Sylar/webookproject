@@ -14,6 +14,7 @@ require (
 	github.com/lithammer/shortuuid/v4 v4.2.0
 	github.com/redis/go-redis/v9 v9.7.3
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1115
+	github.com/yzletter/XtremeGin v1.0.1
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.36.0
 	gorm.io/driver/mysql v1.5.7
