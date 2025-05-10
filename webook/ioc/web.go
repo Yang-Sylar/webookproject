@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 	"webook/internal/web"
-	"webook/internal/web/middleware"
+	myjwt "webook/internal/web/jwt"
 	"webook/pkg/ginx/middlewares/ratelimit"
 	"webook/pkg/limiter"
 )
@@ -20,7 +20,7 @@ func InitGin(mdls []gin.HandlerFunc, hdl *web.UserHandler, oauth2WechatHdl *web.
 	return server
 }
 
-func InitMiddlewares(redisclient redis.Cmdable) []gin.HandlerFunc {
+func InitMiddlewares(redisclient redis.Cmdable, handler *myjwt.JwtHandler) []gin.HandlerFunc {
 
 	return []gin.HandlerFunc{
 		// 限流
@@ -44,15 +44,25 @@ func InitMiddlewares(redisclient redis.Cmdable) []gin.HandlerFunc {
 			MaxAge: 12 * time.Hour,
 		}),
 
-		// JWT
-		middleware.NewLoginJWTMiddlewareBuilder().
-			IgnorePaths("/users/signup"). // 忽略路径
-			IgnorePaths("/users/login").
-			IgnorePaths("/users/login_sms/code/send").
-			IgnorePaths("/users/login_sms").
-			IgnorePaths("/users/refresh_token").
-			IgnorePaths("/oauth2/wechat/authurl").
-			IgnorePaths("/oauth2/wechat/callback").
+		//JWT
+		//middleware.NewLoginJWTMiddlewareBuilder(redisclient).
+		//	IgnorePaths("/users/signup"). // 忽略路径
+		//	IgnorePaths("/users/login").
+		//	IgnorePaths("/users/login_sms/code/send").
+		//	IgnorePaths("/users/login_sms").
+		//	IgnorePaths("/users/refresh_token").
+		//	IgnorePaths("/oauth2/wechat/authurl").
+		//	IgnorePaths("/oauth2/wechat/callback").
+		//	Build(),
+
+		myjwt.NewJwtServiceBuilder(handler).
+			AddIgnorePath("/users/signup"). // 忽略路径
+			AddIgnorePath("/users/login").
+			AddIgnorePath("/users/login_sms/code/send").
+			AddIgnorePath("/users/login_sms").
+			AddIgnorePath("/users/refresh_token").
+			AddIgnorePath("/oauth2/wechat/authurl").
+			AddIgnorePath("/oauth2/wechat/callback").
 			Build(),
 	}
 }
