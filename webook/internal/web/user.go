@@ -1,9 +1,11 @@
 package web
 
 import (
+	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 	"webook/internal/domain"
@@ -150,6 +152,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 
 	if err == service.ErrInvaildUserOrPassword {
 		ctx.String(http.StatusOK, "用户名或密码错误")
+		err = fmt.Errorf("错误, %s", err) // 打印一条错误链
 		return
 	} else if err != nil {
 		ctx.String(http.StatusOK, "服务器异常，注册失败")
@@ -169,6 +172,9 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 
 	if err = u.SetLoginToken(ctx, user.Id); err != nil {
 		ctx.String(http.StatusOK, "系统错误")
+		zap.L().Error("设置 JWT 信息出现异常",
+			zap.Error(err),
+			zap.String("method", "UserHandler:Login"))
 		return
 	}
 
@@ -343,6 +349,11 @@ func (u *UserHandler) LoginSMS(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "校验失败，系统错误",
 		})
+		zap.L().Error("校验验证码出错")
+		zap.L().Debug("", zap.String("手机号码", req.Phone)) // 线上不打印敏感信息
+		// 如果非要打：两种方法
+		// 1. 加密：Encrypted ——> 日志是高频行为，加密影响性能
+		// 2. 脱敏：打印 182****1234 ——> 脱敏后的信息用处有限
 		return
 	}
 

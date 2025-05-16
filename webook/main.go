@@ -6,14 +6,26 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	_ "github.com/spf13/viper/remote"
+	"go.uber.org/zap"
 )
 
 func main() {
-	//initViper()
+	initViper()
+	initLogger()
 	//initViperRemote()
-	initViperV1()
+	//initViperV1()
 	server := initWebServer()
 	server.Run(":8080")
+}
+
+func initLogger() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	// 如果你不 Replace 直接用 Zap.L() 啥都打不出来
+	zap.ReplaceGlobals(logger)
+	zap.L().Info("aaa")
 }
 
 func initViper() {

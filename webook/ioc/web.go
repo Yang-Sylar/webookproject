@@ -44,17 +44,6 @@ func InitMiddlewares(redisclient redis.Cmdable, handler *myjwt.JwtHandler) []gin
 			MaxAge: 12 * time.Hour,
 		}),
 
-		//JWT
-		//middleware.NewLoginJWTMiddlewareBuilder(redisclient).
-		//	IgnorePaths("/users/signup"). // 忽略路径
-		//	IgnorePaths("/users/login").
-		//	IgnorePaths("/users/login_sms/code/send").
-		//	IgnorePaths("/users/login_sms").
-		//	IgnorePaths("/users/refresh_token").
-		//	IgnorePaths("/oauth2/wechat/authurl").
-		//	IgnorePaths("/oauth2/wechat/callback").
-		//	Build(),
-
 		myjwt.NewJwtServiceBuilder(handler).
 			AddIgnorePath("/users/signup"). // 忽略路径
 			AddIgnorePath("/users/login").
@@ -76,11 +65,9 @@ func InitMiddlewares(redisclient redis.Cmdable, handler *myjwt.JwtHandler) []gin
 //if err != nil {
 //	panic(err)
 //}
-
 //store := memstore.NewStore(
 //	[]byte("YTsKHvuxjcQ3jGXrSXH27JvnA3XTkJ6T"),
 //	[]byte("e5Z7W4YbVcerrtjEA77eT5J6hShjjNTp"))
-
 //server.Use(sessions.Sessions("mysession", store)) // cookie的name和值
 //server.Use(
 //	middleware.
